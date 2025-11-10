@@ -1,5 +1,6 @@
 package com.example.myapplication;
 
+import android.content.Intent;
 import android.os.Bundle;
 
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
@@ -8,10 +9,14 @@ import com.google.android.material.snackbar.Snackbar;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
 
+import android.provider.MediaStore;
 import android.view.View;
 
 import android.view.Menu;
 import android.view.MenuItem;
+
+import android.widget.Button;
+import android.widget.Toast;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -21,6 +26,8 @@ public class MainActivity extends AppCompatActivity {
         setContentView(R.layout.activity_main);
         Toolbar toolbar = findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
+        Button button = findViewById(R.id.button1);
+        button.setOnClickListener(v -> openCamera());
     }
 
     @Override
@@ -43,5 +50,15 @@ public class MainActivity extends AppCompatActivity {
         }
 
         return super.onOptionsItemSelected(item);
+    }
+
+    private void openCamera(){
+        Intent cameraIntent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
+
+        if (cameraIntent.resolveActivity(getPackageManager()) != null) {
+            startActivity(cameraIntent);
+        } else {
+            Toast.makeText(this, "No camera app found", Toast.LENGTH_SHORT).show();
+        }
     }
 }

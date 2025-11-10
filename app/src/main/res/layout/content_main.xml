@@ -16,4 +16,26 @@
         app:layout_constraintRight_toRightOf="parent"
         app:layout_constraintTop_toTopOf="parent"/>
 <!--        app:navGraph="@navigation/nav_graph" />-->
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:orientation="vertical">
+
+        <TextView
+            android:id="@+id/boxedText"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Jonah Irizarry &amp; Jake Juettner\nGroup 2"
+            android:background="@drawable/red_box"
+            android:textColor="#000000"
+            />
+
+        <Button
+            android:id="@+id/button1"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Button" />
+
+    </LinearLayout>
 </androidx.constraintlayout.widget.ConstraintLayout>
