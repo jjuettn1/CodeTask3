@@ -1,6 +1,17 @@
 package com.example.myapplication;
 
+import android.Manifest;
 import android.content.Intent;
+import android.content.pm.PackageManager;
+import android.graphics.SurfaceTexture;
+import android.hardware.camera2.CameraAccessException;
+import android.hardware.camera2.CameraCaptureSession;
+import android.hardware.camera2.CameraDevice;
+import android.hardware.camera2.CameraManager;
+import android.hardware.camera2.CameraMetadata;
+import android.hardware.camera2.CaptureRequest;
+import android.hardware.camera2.params.OutputConfiguration;
+import android.hardware.camera2.params.SessionConfiguration;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Environment;
@@ -9,7 +20,9 @@ import android.os.Environment;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.android.material.snackbar.Snackbar;
 
+import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.app.ActivityCompat;
 import androidx.core.content.FileProvider;
 import androidx.appcompat.widget.Toolbar;
 import androidx.activity.result.ActivityResultLauncher;
@@ -17,24 +30,37 @@ import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.activity.result.ActivityResult;
 
 import android.provider.MediaStore;
+import android.se.omapi.Session;
+import android.view.Surface;
+import android.view.TextureView;
 import android.view.View;
 
 import android.view.Menu;
 import android.view.MenuItem;
 
 import android.widget.Button;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import java.io.File;
 import java.io.IOException;
 import java.text.SimpleDateFormat;
+import java.util.Collections;
 import java.util.Date;
 
+import static android.Manifest.permission.CAMERA;
 
 public class MainActivity extends AppCompatActivity {
 
     private Uri photoURI;
     private String currentPhotoPath;
+    private CameraCaptureSession ourCameraCaptureSession;
+    private String stringCameraID;
+    private CameraManager cameraManager;
+    private CameraDevice ourCameraDevice;
+    private CaptureRequest.Builder captureRequestBuilder;
+
+    //Code for Camera Manager, Device, CaptureSession and Builder was derived from: https://www.youtube.com/watch?v=bEhqGpI0kew
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -44,6 +70,14 @@ public class MainActivity extends AppCompatActivity {
         setSupportActionBar(toolbar);
         Button button = findViewById(R.id.button1);
         button.setOnClickListener(v -> openCamera());
+
+        ActivityCompat.requestPermissions(this, new String[]{CAMERA}, PackageManager.PERMISSION_GRANTED);
+
+        textureView = findViewById(R.id.textureView);
+
+        cameraManager = (CameraManager) getSystemService(CAMERA_SERVICE);
+
+        startCamera();
     }
 
     @Override
@@ -51,6 +85,95 @@ public class MainActivity extends AppCompatActivity {
         // Inflate the menu; this adds items to the action bar if it is present.
         getMenuInflater().inflate(R.menu.menu_main, menu);
         return true;
+    }
+
+    private CameraDevice.StateCallback stateCallback = new CameraDevice.StateCallback() {
+        @Override
+        public void onDisconnected(@NonNull CameraDevice camera) {
+            ourCameraDevice.close();
+        }
+
+        @Override
+        public void onError(@NonNull CameraDevice camera, int error) {
+            ourCameraDevice.close();
+            ourCameraDevice = null;
+        }
+
+        @Override
+        public void onOpened(@NonNull CameraDevice camera) {
+            ourCameraDevice = camera;
+        }
+    };
+
+    private void startCamera() {
+
+        //ID: 1 is for front facing camera
+        try {
+            stringCameraID = cameraManager.getCameraIdList()[1];
+
+            if (ActivityCompat.checkSelfPermission(this, CAMERA) != PackageManager.PERMISSION_GRANTED){
+                return;
+            }
+
+            cameraManager.openCamera(stringCameraID, stateCallback, null);
+        }
+        catch (CameraAccessException e){
+            throw new RuntimeException(e);
+        }
+
+    }
+
+    private TextureView textureView;
+
+    public void buttonStartVideoFeed(View view){
+
+        SurfaceTexture surfaceTexture = textureView.getSurfaceTexture();
+        Surface surface = new Surface(surfaceTexture);
+
+        try {
+            captureRequestBuilder = ourCameraDevice.createCaptureRequest(CameraDevice.TEMPLATE_PREVIEW);
+
+            captureRequestBuilder.addTarget(surface);
+
+            OutputConfiguration outputConfiguration = new OutputConfiguration(surface);
+
+            SessionConfiguration sessionConfiguration = new SessionConfiguration(SessionConfiguration.SESSION_REGULAR, Collections.singletonList(outputConfiguration),
+                    getMainExecutor(),
+                    new CameraCaptureSession.StateCallback() {
+                        @Override
+                        public void onConfigureFailed(@NonNull CameraCaptureSession session) {
+                            ourCameraCaptureSession.close();
+                        }
+
+                        @Override
+                        public void onConfigured(@NonNull CameraCaptureSession session) {
+                            ourCameraCaptureSession = session;
+                            captureRequestBuilder.set(CaptureRequest.CONTROL_AE_MODE, CameraMetadata.CONTROL_MODE_AUTO);
+
+                            try {
+                                ourCameraCaptureSession.setRepeatingRequest(captureRequestBuilder.build(), null, null);
+                            } catch (CameraAccessException e) {
+                                throw new RuntimeException(e);
+                            }
+
+                        }
+                    }
+            );
+
+
+            ourCameraDevice.createCaptureSession(sessionConfiguration);
+
+        } catch (CameraAccessException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    public void buttonStopVideoFeed(View view){
+        try {
+            ourCameraCaptureSession.abortCaptures();
+        } catch (CameraAccessException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     @Override
