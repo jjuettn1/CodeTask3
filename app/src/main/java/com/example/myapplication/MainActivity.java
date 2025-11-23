@@ -1,6 +1,5 @@
 package com.example.myapplication;
 
-import android.Manifest;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
@@ -18,9 +17,6 @@ import android.os.Bundle;
 import android.os.Environment;
 
 
-import com.google.android.material.floatingactionbutton.FloatingActionButton;
-import com.google.android.material.snackbar.Snackbar;
-
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
@@ -28,10 +24,8 @@ import androidx.core.content.FileProvider;
 import androidx.appcompat.widget.Toolbar;
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
-import androidx.activity.result.ActivityResult;
 
 import android.provider.MediaStore;
-import android.se.omapi.Session;
 import android.util.Log;
 import android.view.Surface;
 import android.view.TextureView;
@@ -46,15 +40,12 @@ import android.widget.Toast;
 
 import java.io.File;
 import java.io.IOException;
-import java.nio.ByteBuffer;
 import java.text.SimpleDateFormat;
 import java.util.Collections;
 import java.util.Date;
 import java.util.concurrent.Executors;
 
 import static android.Manifest.permission.CAMERA;
-
-import com.example.myapplication.TFLiteInference;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -275,6 +266,7 @@ public class MainActivity extends AppCompatActivity {
 
             if (inputBitmap != null) {
                 try {
+                    Log.d(TFLiteInference.TAG, "Entered Try");
                     recognizedWord = TFLiteInference.recognizeWord(getApplicationContext(), inputBitmap);
                     Log.d(TFLiteInference.TAG, "Recognized word: " + recognizedWord);
                 } catch (Exception e) {

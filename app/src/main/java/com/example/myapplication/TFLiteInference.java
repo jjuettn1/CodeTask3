@@ -35,11 +35,20 @@ public class TFLiteInference {
 
     private static MappedByteBuffer loadModelFile(Context context) throws IOException {
         AssetFileDescriptor fileDescriptor = context.getAssets().openFd(MODEL_FILE_NAME);
+        if(fileDescriptor.getFileDescriptor().valid()){
+            Log.d(TFLiteInference.TAG, "FD is Valid");
+        }
+        else{
+            Log.d(TFLiteInference.TAG, "FD is NOT Valid");
+        }
         try (FileInputStream inputStream = new FileInputStream(fileDescriptor.getFileDescriptor())) {
             FileChannel fileChannel = inputStream.getChannel();
             long startOffset = fileDescriptor.getStartOffset();
             long declaredLength = fileDescriptor.getDeclaredLength();
-            return fileChannel.map(FileChannel.MapMode.READ_ONLY, startOffset, declaredLength);
+
+            MappedByteBuffer temp = fileChannel.map(FileChannel.MapMode.READ_ONLY, startOffset, declaredLength);
+            fileDescriptor.close();
+            return temp;
         }
     }
 
@@ -70,18 +79,29 @@ public class TFLiteInference {
 
         try {
             MappedByteBuffer tfliteModel = loadModelFile(context);
+
+            Log.d(TFLiteInference.TAG, "Aquired Model");
+
             tflite = new Interpreter(tfliteModel, new Interpreter.Options());
+
+            Log.d(TFLiteInference.TAG, "Ran Interpreter");
 
             TensorBuffer inputFeature0 = TensorBuffer.createFixedSize(
                     new int[]{1, 128, 128, 3},
                     DataType.FLOAT32
             );
+
+            Log.d(TFLiteInference.TAG, "Attempting to Load Buffer");
+
             inputFeature0.loadBuffer(byteBuffer);
+
+            Log.d(TFLiteInference.TAG, "Loaded Buffer");
 
             float[][][] rawOutput3D = new float[1][TIME_STEPS][VOCAB_SIZE];
 
+            Log.d(TFLiteInference.TAG, "Attempting to run TFlite");
             tflite.run(inputFeature0.getBuffer(), rawOutput3D);
-
+            Log.d(TFLiteInference.TAG, "Ran TFlite");
             float[] flattenedOutput = new float[TIME_STEPS * VOCAB_SIZE];
             int index = 0;
             for (int t = 0; t < TIME_STEPS; t++) {
