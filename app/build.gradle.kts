@@ -31,6 +31,13 @@ android {
         sourceCompatibility = JavaVersion.VERSION_11
         targetCompatibility = JavaVersion.VERSION_11
     }
+
+    androidResources {
+        noCompress += "tflite"
+    }
+    buildFeatures {
+        mlModelBinding = true
+    }
 }
 
 dependencies {
@@ -39,6 +46,9 @@ dependencies {
     implementation(libs.navigation.runtime)
     implementation(libs.navigation.fragment)
     implementation(files("libs\\super-csv-2.4.0.jar"))
+    implementation("org.tensorflow:tensorflow-lite:+")
+    implementation("org.tensorflow:tensorflow-lite-support:+")
+    implementation("org.tensorflow:tensorflow-lite-metadata:+")
     testImplementation(libs.junit)
     androidTestImplementation(libs.ext.junit)
     androidTestImplementation(libs.espresso.core)

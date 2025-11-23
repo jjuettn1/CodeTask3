@@ -62,7 +62,38 @@
         <TextureView
             android:id="@+id/textureView"
             android:layout_width="match_parent"
-            android:layout_height="499dp" />
+            android:layout_height="403dp" />
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:orientation="horizontal">
+
+            <TextView
+                android:id="@+id/resultTextView"
+                android:layout_width="wrap_content"
+                android:layout_height="match_parent"
+                android:layout_marginBottom="16dp"
+                android:background="#A0000000"
+                android:padding="8dp"
+                android:text="Ready for Recognition"
+                android:textColor="#00FF00"
+                android:textSize="24sp"
+                app:layout_constraintBottom_toTopOf="@+id/recognizeButton"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toStartOf="parent" />
+
+            <Button
+                android:id="@+id/recognizeButton"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Recognize Frame"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintEnd_toEndOf="parent"
+                android:layout_marginBottom="32dp" />
+
+        </LinearLayout>
 
     </LinearLayout>
 </androidx.constraintlayout.widget.ConstraintLayout>

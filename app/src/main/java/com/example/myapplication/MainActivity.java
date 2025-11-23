@@ -3,6 +3,7 @@ package com.example.myapplication;
 import android.Manifest;
 import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.graphics.Bitmap;
 import android.graphics.SurfaceTexture;
 import android.hardware.camera2.CameraAccessException;
 import android.hardware.camera2.CameraCaptureSession;
@@ -31,6 +32,7 @@ import androidx.activity.result.ActivityResult;
 
 import android.provider.MediaStore;
 import android.se.omapi.Session;
+import android.util.Log;
 import android.view.Surface;
 import android.view.TextureView;
 import android.view.View;
@@ -44,11 +46,15 @@ import android.widget.Toast;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.ByteBuffer;
 import java.text.SimpleDateFormat;
 import java.util.Collections;
 import java.util.Date;
+import java.util.concurrent.Executors;
 
 import static android.Manifest.permission.CAMERA;
+
+import com.example.myapplication.TFLiteInference;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -60,6 +66,9 @@ public class MainActivity extends AppCompatActivity {
     private CameraDevice ourCameraDevice;
     private CaptureRequest.Builder captureRequestBuilder;
 
+    private TextView resultTextView;
+    private Button inferenceButton;
+
     //Code for Camera Manager, Device, CaptureSession and Builder was derived from: https://www.youtube.com/watch?v=bEhqGpI0kew
 
     @Override
@@ -68,6 +77,9 @@ public class MainActivity extends AppCompatActivity {
         setContentView(R.layout.activity_main);
         Toolbar toolbar = findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
+        resultTextView = findViewById(R.id.resultTextView);
+        inferenceButton = findViewById(R.id.recognizeButton);
+        inferenceButton.setOnClickListener(v -> recognizeBM());
         Button button = findViewById(R.id.button1);
         button.setOnClickListener(v -> openCamera());
 
@@ -239,4 +251,44 @@ public class MainActivity extends AppCompatActivity {
                         }
                     }
             );
+
+    private void recognizeBM() {
+        if (textureView.isAvailable()) {
+            Bitmap currentFrame = textureView.getBitmap();
+            if (currentFrame != null) {
+                runRecognitionInBackground(currentFrame);
+            } else {
+                Toast.makeText(this, "Could not capture frame from preview.", Toast.LENGTH_SHORT).show();
+            }
+        } else {
+            Toast.makeText(this, "Camera preview is not available.", Toast.LENGTH_SHORT).show();
+        }
+    }
+
+    private void runRecognitionInBackground(Bitmap inputBitmap) {
+        // Clear previous result display
+        resultTextView.setText("Recognizing...");
+
+        Executors.newSingleThreadExecutor().execute(() -> {
+            String recognizedWord;
+            Log.d(TFLiteInference.TAG, "Ping");
+
+            if (inputBitmap != null) {
+                try {
+                    recognizedWord = TFLiteInference.recognizeWord(getApplicationContext(), inputBitmap);
+                    Log.d(TFLiteInference.TAG, "Recognized word: " + recognizedWord);
+                } catch (Exception e) {
+                    Log.e(TFLiteInference.TAG, "TFLite Inference Error.", e);
+                    recognizedWord = "INFERENCE ERROR: " + e.getMessage();
+                }
+            } else {
+                recognizedWord = "ERROR: Input bitmap was null.";
+            }
+
+            String finalResult = recognizedWord;
+            runOnUiThread(() -> {
+                resultTextView.setText("Recognized Word: " + finalResult);
+            });
+        });
+    }
 }
