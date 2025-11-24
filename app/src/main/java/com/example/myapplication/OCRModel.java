@@ -8,7 +8,7 @@ import org.tensorflow.lite.Interpreter;
 import org.tensorflow.lite.support.common.FileUtil;
 
 
-public class OCRModel {
+public class OCRModel  {
     private Interpreter interpreter;
     private final char[] alphabet = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ".toCharArray();
     private final int VOCAB_SIZE = 63;

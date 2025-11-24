@@ -43,9 +43,12 @@ import java.io.IOException;
 import java.text.SimpleDateFormat;
 import java.util.Collections;
 import java.util.Date;
+import java.util.concurrent.Executor;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 import static android.Manifest.permission.CAMERA;
+import static java.lang.Thread.sleep;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -60,9 +63,12 @@ public class MainActivity extends AppCompatActivity {
     private OCRModel model;
 
     private TextView resultTextView;
-    private Button inferenceButton;
+
+    private volatile boolean isRecognizing;
 
     //Code for Camera Manager, Device, CaptureSession and Builder was derived from: https://www.youtube.com/watch?v=bEhqGpI0kew
+
+    ExecutorService executorService = Executors.newSingleThreadExecutor();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -71,8 +77,6 @@ public class MainActivity extends AppCompatActivity {
         Toolbar toolbar = findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
         resultTextView = findViewById(R.id.resultTextView);
-        inferenceButton = findViewById(R.id.recognizeButton);
-        inferenceButton.setOnClickListener(v -> recognizeBM());
         Button button = findViewById(R.id.button1);
         button.setOnClickListener(v -> openCamera());
 
@@ -168,8 +172,9 @@ public class MainActivity extends AppCompatActivity {
                     }
             );
 
-
             ourCameraDevice.createCaptureSession(sessionConfiguration);
+
+            recognizeBM();
 
         } catch (CameraAccessException e) {
             throw new RuntimeException(e);
@@ -177,6 +182,12 @@ public class MainActivity extends AppCompatActivity {
     }
 
     public void buttonStopVideoFeed(View view){
+
+        if(isRecognizing){
+            isRecognizing = false;
+            executorService.shutdownNow();
+        }
+
         try {
             ourCameraCaptureSession.abortCaptures();
         } catch (CameraAccessException e) {
@@ -249,55 +260,35 @@ public class MainActivity extends AppCompatActivity {
             );
 
     private void recognizeBM() {
+        if(!isRecognizing) {
+            isRecognizing = true;
 
+            executorService.execute(() -> {
 
-        Bitmap frame = textureView.getBitmap();
+                while(true){
+                    Bitmap frame = textureView.getBitmap();
 
-        if(frame == null) {
-            resultTextView.setText("Error");
-            return;
-        }
+                    if (frame == null) {
+                        resultTextView.setText("Error");
+                        return;
+                    }
 
-        String pred = model.runInference(frame);
-        resultTextView.setText(pred);
+                    String pred = model.runInference(frame);
 
-//        if (textureView.isAvailable()) {
-//            Bitmap currentFrame = textureView.getBitmap();
-//            if (currentFrame != null) {
-//                runRecognitionInBackground(currentFrame);
-//            } else {
-//                Toast.makeText(this, "Could not capture frame from preview.", Toast.LENGTH_SHORT).show();
-//            }
-//        } else {
-//            Toast.makeText(this, "Camera preview is not available.", Toast.LENGTH_SHORT).show();
-//        }
-    }
+                    runOnUiThread(() -> {
+                        resultTextView.setText(pred);
+                    });
 
-    private void runRecognitionInBackground(Bitmap inputBitmap) {
-        // Clear previous result display
-        resultTextView.setText("Recognizing...");
-
-        Executors.newSingleThreadExecutor().execute(() -> {
-            String recognizedWord;
-            Log.d(TFLiteInference.TAG, "Ping");
-
-            if (inputBitmap != null) {
-                try {
-                    Log.d(TFLiteInference.TAG, "Entered Try");
-                    recognizedWord = TFLiteInference.recognizeWord(getApplicationContext(), inputBitmap);
-                    Log.d(TFLiteInference.TAG, "Recognized word: " + recognizedWord);
-                } catch (Exception e) {
-                    Log.e(TFLiteInference.TAG, "TFLite Inference Error.", e);
-                    recognizedWord = "INFERENCE ERROR: " + e.getMessage();
+                    try {
+                        Thread.sleep(200);
+                    } catch (InterruptedException e) {
+                        break;
+                    }
                 }
-            } else {
-                recognizedWord = "ERROR: Input bitmap was null.";
-            }
 
-            String finalResult = recognizedWord;
-            runOnUiThread(() -> {
-                resultTextView.setText("Recognized Word: " + finalResult);
             });
-        });
+
+        }
     }
+
 }
