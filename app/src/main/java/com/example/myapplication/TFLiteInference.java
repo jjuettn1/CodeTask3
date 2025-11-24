@@ -13,6 +13,7 @@ import org.tensorflow.lite.support.image.TensorImage;
 import org.tensorflow.lite.support.image.ops.ResizeOp;
 import org.tensorflow.lite.support.tensorbuffer.TensorBuffer;
 
+import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.nio.ByteBuffer;
@@ -78,11 +79,11 @@ public class TFLiteInference {
         String decodedWord = "INFERENCE_FAILED";
 
         try {
-            MappedByteBuffer tfliteModel = loadModelFile(context);
+//            MappedByteBuffer tfliteModel = loadModelFile(context);
 
             Log.d(TFLiteInference.TAG, "Aquired Model");
 
-            tflite = new Interpreter(tfliteModel, new Interpreter.Options());
+            tflite = new Interpreter(new File("model.tflite"));
 
             Log.d(TFLiteInference.TAG, "Ran Interpreter");
 
@@ -112,7 +113,7 @@ public class TFLiteInference {
 
             decodedWord = decodePrediction(flattenedOutput, vocab);
 
-        } catch (IOException e) {
+        } catch (Exception e) {
             Log.e(TAG, "Error running inference or loading model", e);
         } finally {
             if (tflite != null) {

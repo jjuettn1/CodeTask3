@@ -17,6 +17,7 @@ material = { group = "com.google.android.material", name = "material", version.r
 navigation-runtime = { group = "androidx.navigation", name = "navigation-runtime", version.ref = "navigationRuntime" }
 navigation-fragment = { group = "androidx.navigation", name = "navigation-fragment", version.ref = "navigationFragment" }
 tensorflow-lite-metadata = { group = "org.tensorflow", name = "tensorflow-lite-metadata" }
+tensorflow-lite-gpu = { group = "org.tensorflow", name = "tensorflow-lite-gpu" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }
