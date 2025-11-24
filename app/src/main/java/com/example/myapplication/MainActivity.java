@@ -57,6 +57,8 @@ public class MainActivity extends AppCompatActivity {
     private CameraDevice ourCameraDevice;
     private CaptureRequest.Builder captureRequestBuilder;
 
+    private OCRModel model;
+
     private TextView resultTextView;
     private Button inferenceButton;
 
@@ -73,6 +75,8 @@ public class MainActivity extends AppCompatActivity {
         inferenceButton.setOnClickListener(v -> recognizeBM());
         Button button = findViewById(R.id.button1);
         button.setOnClickListener(v -> openCamera());
+
+        model = new OCRModel(getApplicationContext());
 
         ActivityCompat.requestPermissions(this, new String[]{CAMERA}, PackageManager.PERMISSION_GRANTED);
 
@@ -110,9 +114,10 @@ public class MainActivity extends AppCompatActivity {
 
     private void startCamera() {
 
-        //ID: 1 is for front facing camera
+        //ID: 1 is for front facing camera medium
+        //ID: 0 or 2 is for front facing camera Jonah's Phone
         try {
-            stringCameraID = cameraManager.getCameraIdList()[1];
+            stringCameraID = cameraManager.getCameraIdList()[0];
 
             if (ActivityCompat.checkSelfPermission(this, CAMERA) != PackageManager.PERMISSION_GRANTED){
                 return;
@@ -244,16 +249,28 @@ public class MainActivity extends AppCompatActivity {
             );
 
     private void recognizeBM() {
-        if (textureView.isAvailable()) {
-            Bitmap currentFrame = textureView.getBitmap();
-            if (currentFrame != null) {
-                runRecognitionInBackground(currentFrame);
-            } else {
-                Toast.makeText(this, "Could not capture frame from preview.", Toast.LENGTH_SHORT).show();
-            }
-        } else {
-            Toast.makeText(this, "Camera preview is not available.", Toast.LENGTH_SHORT).show();
+
+
+        Bitmap frame = textureView.getBitmap();
+
+        if(frame == null) {
+            resultTextView.setText("Error");
+            return;
         }
+
+        String pred = model.runInference(frame);
+        resultTextView.setText(pred);
+
+//        if (textureView.isAvailable()) {
+//            Bitmap currentFrame = textureView.getBitmap();
+//            if (currentFrame != null) {
+//                runRecognitionInBackground(currentFrame);
+//            } else {
+//                Toast.makeText(this, "Could not capture frame from preview.", Toast.LENGTH_SHORT).show();
+//            }
+//        } else {
+//            Toast.makeText(this, "Camera preview is not available.", Toast.LENGTH_SHORT).show();
+//        }
     }
 
     private void runRecognitionInBackground(Bitmap inputBitmap) {
