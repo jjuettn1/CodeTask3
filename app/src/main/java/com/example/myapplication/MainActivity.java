@@ -266,6 +266,9 @@ public class MainActivity extends AppCompatActivity {
             executorService.execute(() -> {
 
                 while(true){
+
+                    long startTime = System.currentTimeMillis();
+
                     Bitmap frame = textureView.getBitmap();
 
                     if (frame == null) {
@@ -273,7 +276,7 @@ public class MainActivity extends AppCompatActivity {
                         return;
                     }
 
-                    String pred = model.runInference(frame);
+                    String pred = model.runInference(frame) + "\nLatency: " + (System.currentTimeMillis() - startTime) + "ms";
 
                     runOnUiThread(() -> {
                         resultTextView.setText(pred);
